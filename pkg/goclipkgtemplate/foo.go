@@ -14,6 +14,7 @@ type FooClassCfg struct {
 type FooClass struct {
 	FooClassCfg          // this is an embedded type
 	Host                 string
+	open                 bool
 }
 
 // constructor for ExAClass
@@ -33,15 +34,18 @@ func NewFooClass(host string, cfg FooClassCfg) (*FooClass, error) {
 	t.Name = cfg.Name
 	t.Log = cfg.Log
 	t.Host = host
+	t.open = false
 
 	return t, nil
 }
 
-func (t *FooClass) Create() error {
+func (t *FooClass) Open() error {
+	t.open = true
 	t.Log.Info("Hello! My name is ", t.Name)
 	return nil
 }
 
 func (t *FooClass) Close() {
 	t.Log.Info("Goodbye ", t.Host)
+	t.open = false
 }

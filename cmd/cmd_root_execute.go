@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-// TODO: these come from the makefile - figure this out
+// TODO: these come from the makefile (or goxc?) - figure this out
 // GoCLIPkgTemplateVersion is the release TAG
 var GoCLIPkgTemplateVersion string
 // GoCLIPkgTemplateBuild is the current GIT commit
@@ -31,7 +31,7 @@ var rootCmd = &cobra.Command{
 
 var cmdVersion = &cobra.Command{
 	Use:   "version",
-	Short: "Version and Release information about the dci tool",
+	Short: "Version and Release information about the goclipkgtemplate",
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("goclipkgtemplate, a CLI tool example\n")
 		fmt.Printf("Version:  %s\n", GoCLIPkgTemplateVersion)

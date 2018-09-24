@@ -13,7 +13,7 @@ func init() {
 var cmdAction1 = &cobra.Command{
 	Use:   "action1 <string1> <string2>",
 	Short: "print your name to the console",
-	Args: cobra.MinimumNArgs(2),
+	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		Action1Func(args)
 	},
@@ -35,7 +35,7 @@ func Action1Func (args []string) error {
 		return err
 	}
 
-	foo.Create()
+	foo.Open()
 	foo.Close()
 	return nil
 }
