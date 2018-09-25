@@ -21,10 +21,12 @@ var GoCLIPkgTemplateVersion string
 var GoCLIPkgTemplateBuild string
 
 //LogPointer to have same logging in pkg and cmds
-// FIXME: Does this need to be global scoped?  Better to use a stuct at least?
-var log = logrus.New()
+// FIXME: Does this need to be global scoped?  Better to use a struct at least?
+var log = logrus.New()  // init global logger
 var logLevel int
 
+var cfgEnvVarsPrefix = "GOCLIP"  // vars in format GOCLIP_<key>
+var cfgFileName string = ".goclipkgtemplate"
 var cfgFile string
 
 var rootCmd = &cobra.Command{
@@ -47,6 +49,11 @@ func init() {
 
 	// Global flag across all subcommands
 	rootCmd.PersistentFlags().IntVar(&logLevel, "logLevel", 4, "Set the logging level [0=panic, 3=warning, 5=debug]")
+
+	configUsage := fmt.Sprintf("config file (default is $HOME/%s, ./%s)", cfgFileName, cfgFileName)
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", configUsage)
+
+	// root command
 	rootCmd.AddCommand(cmdVersion)
 }
 
@@ -85,25 +92,38 @@ func Execute() {
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
+		log.Debug("target config file: [", cfgFile, "]")
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
 		// Find home directory.
 		home, err := homedir.Dir()
 		if err != nil {
-			fmt.Println(err)
+			log.Error(err)
 			os.Exit(1)
 		}
 
-		// Search config in home directory with name ".cobra-example" (without extension).
+		// Search config in home and current directory with name "cfgFileName"
+		log.Debug("target config file: [", home, "/", cfgFileName, "]")
+		log.Debug("target config file: [./", cfgFileName, "]")
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".cobra-example")
+		//viper.AddConfigPath(".")
+		viper.SetConfigName(cfgFileName)
 	}
 
+	viper.SetEnvPrefix(cfgEnvVarsPrefix)
 	viper.AutomaticEnv() // read in environment variables that match
+
+	one := viper.Get("one")  // without the prefix, vars in format <prefix>_<key>
+	log.Info("Environment var one: ", one)
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		log.Info("Using config file:", viper.ConfigFileUsed())
+		log.Info("Manufacturer: ", viper.Get("Manufacturer"))
+	} else{
+		log.Warn("Error config file: ", err.Error())
 	}
+
+
 }
