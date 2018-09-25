@@ -13,21 +13,19 @@ func init() {
 var cmdAction1 = &cobra.Command{
 	Use:   "action1 <string1> <string2>",
 	Short: "print your name to the console",
-	Args: cobra.ExactArgs(2),
+	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
-		Action1Func(args)
+		action1Func(args)
 	},
 }
 
-// functions are pulled out of the cobra struct for
-// purpose of unit testing
-func Action1Func (args []string) error {
+func action1Func(args []string) error {
 
 	foo, err := goclipkgtemplate.NewFooClass(
 		args[0],
 		goclipkgtemplate.FooClassCfg{
 			Name: args[1],
-			Log: log,
+			Log:  log,
 		})
 
 	if err != nil {

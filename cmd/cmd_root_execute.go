@@ -1,25 +1,28 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+
 	"github.com/mitchellh/go-homedir"
 	"github.com/onrik/logrus/filename"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/x-cray/logrus-prefixed-formatter"
-	"os"
 )
 
 // TODO: these come from the makefile (or goxc?) - figure this out
 // GoCLIPkgTemplateVersion is the release TAG
 var GoCLIPkgTemplateVersion string
+
 // GoCLIPkgTemplateBuild is the current GIT commit
 var GoCLIPkgTemplateBuild string
 
 //LogPointer to have same logging in pkg and cmds
 // FIXME: Does this need to be global scoped?  Better to use a stuct at least?
-var log *logrus.Logger = logrus.New()
+var log = logrus.New()
 var logLevel int
 
 var cfgFile string
@@ -45,6 +48,22 @@ func init() {
 	// Global flag across all subcommands
 	rootCmd.PersistentFlags().IntVar(&logLevel, "logLevel", 4, "Set the logging level [0=panic, 3=warning, 5=debug]")
 	rootCmd.AddCommand(cmdVersion)
+}
+
+// ExecuteCommand executes commands, intended for testing
+func ExecuteCommand(args ...string) (output string, err error) {
+	_, output, err = executeCommandC(rootCmd, args...)
+	return output, err
+}
+
+func executeCommandC(root *cobra.Command, args ...string) (c *cobra.Command, output string, err error) {
+	buf := new(bytes.Buffer)
+	root.SetOutput(buf)
+	root.SetArgs(args)
+
+	c, err = root.ExecuteC()
+
+	return c, buf.String(), err
 }
 
 // Execute - starts the command parsing process
@@ -88,4 +107,3 @@ func initConfig() {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
 }
-
