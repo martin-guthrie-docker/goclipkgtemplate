@@ -20,7 +20,7 @@ var GoCLIPkgTemplateBuild string
 //LogPointer to have same logging in pkg and cmds
 // FIXME: Does this need to be global scoped?  Better to use a struct at least?
 var log *logrus.Logger = logrus.New()  // init global logger
-var logLevel int
+var logLevel int = 5
 
 var cfgEnvVarsPrefix = "GOCLIP"  // vars in format GOCLIP_<key>
 var cfgFileName string = ".goclipkgtemplate"
@@ -45,7 +45,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	// Global flag across all subcommands
-	rootCmd.PersistentFlags().IntVar(&logLevel, "logLevel", 4, "Set the logging level [0=panic, 3=warning, 5=debug]")
+	rootCmd.PersistentFlags().IntVar(&logLevel, "logLevel", 5, "Set the logging level [0=panic, 3=warning, 5=debug]")
 
 	configUsage := fmt.Sprintf("config file (default is $HOME/%s, ./%s)", cfgFileName, cfgFileName)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", configUsage)
@@ -57,7 +57,16 @@ func init() {
 // Execute - starts the command parsing process
 func Execute() {
 	log.Formatter = new(prefixed.TextFormatter)
-	log.Level = logrus.DebugLevel
+
+	// FIXME: this doesn't work because logrus hasn't parsed flags yet!
+	switch logLevel {
+	case 0: log.Level = logrus.PanicLevel
+	case 1: log.Level = logrus.FatalLevel
+	case 2: log.Level = logrus.ErrorLevel
+	case 3: log.Level = logrus.WarnLevel
+	case 4: log.Level = logrus.InfoLevel  // this is default by the flag
+	case 5: log.Level = logrus.DebugLevel
+	}
 
 	filenameHook := filename.NewHook()
 	filenameHook.Field = "src"
@@ -69,43 +78,58 @@ func Execute() {
 	}
 }
 
+func logConfig() {
+	log.Info("Using config file:", viper.ConfigFileUsed())
+	log.Info("Manufacturer: ", viper.Get("Manufacturer"))
+	log.Info("Options: ", viper.Get("Options"))
+
+	// TODO: how can the viper vars be accessed elsewhere in the program?
+	//       should the fields be populated in a global struct? or is Viper global?
+}
+
 // got this from https://github.com/spf13/cobra.... not sure how/what it does yet
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	if cfgFile != "" {
+		// Since the user specified a config file, throw error, exit if not found
 		log.Debug("target config file: [", cfgFile, "]")
 		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
+		viper.SetConfigFile(cfgFile)  // includes full path
+
+		if err := viper.ReadInConfig(); err != nil {
+			log.Error("config file: ", err.Error())
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		logConfig()
+
 	} else {
-		// Find home directory.
+		// Search config in home and current directory with name "cfgFileName"
 		home, err := homedir.Dir()
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
 		}
-
-		// Search config in home and current directory with name "cfgFileName"
 		log.Debug("target config file: [", home, "/", cfgFileName, "]")
-		log.Debug("target config file: [./", cfgFileName, "]")
+		// see https://github.com/spf13/viper/issues/390
+		viper.SetConfigType("yaml")
 		viper.AddConfigPath(home)
-		//viper.AddConfigPath(".")
 		viper.SetConfigName(cfgFileName)
+
+		if err := viper.ReadInConfig(); err != nil {
+			log.Warn("config file: ", err.Error())
+			// NOTE: if this program needs external config, then error and exit here
+		} else {
+			logConfig()
+		}
 	}
 
+	// get environment vars
 	viper.SetEnvPrefix(cfgEnvVarsPrefix)
 	viper.AutomaticEnv() // read in environment variables that match
 
 	one := viper.Get("one")  // without the prefix, vars in format <prefix>_<key>
 	log.Info("Environment var one: ", one)
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		log.Info("Using config file:", viper.ConfigFileUsed())
-		log.Info("Manufacturer: ", viper.Get("Manufacturer"))
-	} else{
-		log.Warn("Error config file: ", err.Error())
-	}
-
 
 }
 
