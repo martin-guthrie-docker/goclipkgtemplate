@@ -12,7 +12,7 @@ func init() {
 
 var cmdAction1 = &cobra.Command{
 	Use:   "action1 <string1> <string2>",
-	Short: "print your name to the console",
+	Short: "print <string1> and <string2> to log",
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		Action1Func(args)
