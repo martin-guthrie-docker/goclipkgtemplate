@@ -3,35 +3,39 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"github.com/martin-guthrie-docker/goclipkgtemplate/pkg/goclipkgtemplate"
+	"github.com/sirupsen/logrus"
 	"os"
 
+	"github.com/martin-guthrie-docker/goclipkgtemplate/pkg/log"
 	"github.com/mitchellh/go-homedir"
-	"github.com/onrik/logrus/filename"
-	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/x-cray/logrus-prefixed-formatter"
 )
 
 // TODO: these come from the makefile (or goxc?) - figure this out
 // GoCLIPkgTemplateVersion is the release TAG
 var GoCLIPkgTemplateVersion string
-
 // GoCLIPkgTemplateBuild is the current GIT commit
 var GoCLIPkgTemplateBuild string
 
-//LogPointer to have same logging in pkg and cmds
-// FIXME: Does this need to be global scoped?  Better to use a struct at least?
-var log *logrus.Logger = logrus.New()  // init global logger
-var logLevel int = 5
+var verboseFlag bool = false
 
 var cfgEnvVarsPrefix = "GOCLIP"  // vars in format GOCLIP_<key>
 var cfgFileName string = ".goclipkgtemplate"
 var cfgFile string
 
+var GlobalConfig goclipkgtemplate.ConfigClass
+
 var rootCmd = &cobra.Command{
 	Use:   "goclipkgtemplate",
 	Short: "This tool is a template for creating CLI tools with a PKG option",
+	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		if viper.GetBool("verbFlag") {
+			v := int(logrus.DebugLevel)
+			setLoggingLevel(v)
+		}
+	},
 }
 
 var cmdVersion = &cobra.Command{
@@ -45,16 +49,27 @@ var cmdVersion = &cobra.Command{
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
 	// Global flag across all subcommands
-	rootCmd.PersistentFlags().IntVar(&logLevel, "logLevel", 5, "Set the logging level [0=panic, 3=warning, 5=debug]")
+	rootCmd.PersistentFlags().BoolVar(&verboseFlag, "verbose", false,"Set debug level")
 
-	configUsage := fmt.Sprintf("config file (default is $HOME/%s, ./%s)", cfgFileName, cfgFileName)
+	configUsage := fmt.Sprintf("config file (default is $HOME/%s, ./%s.yaml)", cfgFileName, cfgFileName)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", configUsage)
 
 	// root command
 	rootCmd.AddCommand(cmdVersion)
+
+	viper.BindPFlags(rootCmd.PersistentFlags())
+	viper.BindPFlag("verbFlag", rootCmd.PersistentFlags().Lookup("verbose"))
+
+	cobra.OnInitialize(initConfig)
+
+	GlobalConfig, err := goclipkgtemplate.NewConfigClass(viper.GetViper(),
+										 			  goclipkgtemplate.ConfigClassCfg{ Log: log.Term } )
+	if err != nil {
+		log.Term.Error(err)
+		os.Exit(1)
+	}
+	GlobalConfig.Open()
 }
 
 // ExecuteCommand executes commands, intended for testing
@@ -75,79 +90,73 @@ func executeCommandC(root *cobra.Command, args ...string) (c *cobra.Command, out
 
 // Execute - starts the command parsing process
 func Execute() {
-	log.Formatter = new(prefixed.TextFormatter)
-
-	// FIXME: this doesn't work because logrus hasn't parsed flags yet!
-	switch logLevel {
-	case 0: log.Level = logrus.PanicLevel
-	case 1: log.Level = logrus.FatalLevel
-	case 2: log.Level = logrus.ErrorLevel
-	case 3: log.Level = logrus.WarnLevel
-	case 4: log.Level = logrus.InfoLevel  // this is default by the flag
-	case 5: log.Level = logrus.DebugLevel
-	}
-
-	filenameHook := filename.NewHook()
-	filenameHook.Field = "src"
-	log.AddHook(filenameHook)
-
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 }
 
-func logConfig() {
-	log.Info("Using config file:", viper.ConfigFileUsed())
-	log.Info("Manufacturer: ", viper.Get("Manufacturer"))
-	log.Info("Options: ", viper.Get("Options"))
-
-	// TODO: how can the viper vars be accessed elsewhere in the program?
-	//       should the fields be populated in a global struct? or is Viper global?
+func setLoggingLevel(level int) {
+	switch level {
+	case 0:
+		log.Term.Level = logrus.PanicLevel
+	case 1:
+		log.Term.Level = logrus.FatalLevel
+	case 2:
+		log.Term.Level = logrus.ErrorLevel
+	case 3:
+		log.Term.Level = logrus.WarnLevel
+	case 4:
+		log.Term.Level = logrus.InfoLevel
+	case 5:
+		log.Term.Level = logrus.DebugLevel
+	}
 }
 
-// got this from https://github.com/spf13/cobra.... not sure how/what it does yet
+
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// from https://github.com/spf13/cobra
+
+	// uncomment in order to log this func. This occurs before loglevel is set.
+	// setLoggingLevel(5)
+
 	if cfgFile != "" {
 		// Since the user specified a config file, throw error, exit if not found
-		log.Debug("target config file: [", cfgFile, "]")
+		log.Term.Debug("target config file: [", cfgFile, "]")
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)  // includes full path
 
 		if err := viper.ReadInConfig(); err != nil {
-			log.Error("config file: ", err.Error())
+			log.Term.Error("config file: ", err.Error())
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		logConfig()
-
 	} else {
 		// Search config in home and current directory with name "cfgFileName"
 		home, err := homedir.Dir()
 		if err != nil {
-			log.Error(err)
+			log.Term.Error(err)
 			os.Exit(1)
 		}
-		log.Debug("target config file: [", home, "/", cfgFileName, "]")
+		log.Term.Debug("target config file: [", home, "/", cfgFileName, "]")
 		// see https://github.com/spf13/viper/issues/390
 		viper.SetConfigType("yaml")
 		viper.AddConfigPath(home)
 		viper.SetConfigName(cfgFileName)
 
 		if err := viper.ReadInConfig(); err != nil {
-			log.Warn("config file: ", err.Error())
+			log.Term.Warn("config file: ", err.Error())
 			// NOTE: if this program needs external config, then error and exit here
-		} else {
-			logConfig()
 		}
+	}
+
+	if viper.Get("verbosity") != nil {
+		v := viper.Get("verbosity").(int)
+		setLoggingLevel(v)
 	}
 
 	// get environment vars
 	viper.SetEnvPrefix(cfgEnvVarsPrefix)
 	viper.AutomaticEnv() // read in environment variables that match
-
-	one := viper.Get("one")  // without the prefix, vars in format <prefix>_<key>
-	log.Info("Environment var one: ", one)
-
 }

@@ -4,3 +4,5 @@ Year: 2018
 Options:
   leather
   sun roof
+# add verbosity 0-Panic, 4-Info, 5-Debug
+verbosity: 5
