@@ -23,11 +23,9 @@ type envData struct {
 }
 
 type ConfigClass struct {
-	FooClassCfg          // this is an embedded type
+	ConfigClassCfg       // this is an embedded type
 	CarData              carData
 	EnvData              envData
-	test bol
-	
 }
 
 // constructor for ConfigClass
