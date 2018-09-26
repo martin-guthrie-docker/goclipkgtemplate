@@ -8,9 +8,9 @@ import (
 
 func TestAction1Func(t *testing.T) {
 
-	_, err := cmd.ExecuteCommand("action1", "string1", "string2")
+	_, err := cmd.ExecuteCommand("foo", "string1", "string2")
 
 	if err != nil {
-		t.Errorf("Action1Func failed with err: %s", err.Error())
+		t.Errorf("fooFunc failed with err: %s", err.Error())
 	}
 }
