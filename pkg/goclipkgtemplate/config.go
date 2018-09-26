@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 )
 
-// initializer struct for ExAClass
+// initializer struct for ConfigClass
 type ConfigClassCfg struct {
 	Log                  *logrus.Logger
 }
@@ -51,6 +51,11 @@ func NewConfigClass(v *viper.Viper, cfg ConfigClassCfg) (*ConfigClass, error) {
 	} else {
 		t.CarData.Model = "UNKNOWN"
 	}
+	//if v.Get("Year") != nil {
+	//	t.CarData.Year = v.Get("Year").(int16)
+	//} else {
+	//	t.CarData.Year = -1
+	//}
 	//t.CarData.Options = v.Get("Options").(string)  # FIXME
 
 	// data from the environment variables
@@ -71,6 +76,7 @@ func (t *ConfigClass) Open() error {
 func (t *ConfigClass) Dump(saveToYaml bool, filename string) error {
 	t.Log.Info("Manufacturer: ", t.CarData.Manufacturer)
 	t.Log.Info("Model: ", t.CarData.Model)
+	//t.Log.Info("Year: ", t.CarData.Year)
 
 	t.Log.Info("ENV ONE: ", t.EnvData.one)
 
