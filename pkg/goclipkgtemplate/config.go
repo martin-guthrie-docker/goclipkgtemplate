@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 )
 
-// initializer struct for ExAClass
+// initializer struct for ConfigClass
 type ConfigClassCfg struct {
 	Log                  *logrus.Logger
 }

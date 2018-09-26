@@ -25,7 +25,7 @@ var cfgEnvVarsPrefix = "GOCLIP"  // vars in format GOCLIP_<key>
 var cfgFileName string = ".goclipkgtemplate"
 var cfgFile string
 
-var GlobalConfig goclipkgtemplate.ConfigClass
+var GlobalConfig *goclipkgtemplate.ConfigClass
 
 var rootCmd = &cobra.Command{
 	Use:   "goclipkgtemplate",
@@ -152,12 +152,11 @@ func initConfig() {
 	viper.SetEnvPrefix(cfgEnvVarsPrefix)
 	viper.AutomaticEnv() // read in environment variables that match
 
-	GlobalConfig, err := goclipkgtemplate.NewConfigClass(viper.GetViper(),
+	var err error
+	GlobalConfig, err = goclipkgtemplate.NewConfigClass(viper.GetViper(),
 		goclipkgtemplate.ConfigClassCfg{ Log: log.Term } )
 	if err != nil {
 		log.Term.Error(err)
 		os.Exit(1)
 	}
-	GlobalConfig.Open()
-
 }
