@@ -61,15 +61,7 @@ func init() {
 	viper.BindPFlags(rootCmd.PersistentFlags())
 	viper.BindPFlag("verbFlag", rootCmd.PersistentFlags().Lookup("verbose"))
 
-	cobra.OnInitialize(initConfig)
-
-	GlobalConfig, err := goclipkgtemplate.NewConfigClass(viper.GetViper(),
-										 			  goclipkgtemplate.ConfigClassCfg{ Log: log.Term } )
-	if err != nil {
-		log.Term.Error(err)
-		os.Exit(1)
-	}
-	GlobalConfig.Open()
+	cobra.OnInitialize(initConfig)  // NOTE: this does not run 'now'!
 }
 
 // ExecuteCommand executes commands, intended for testing
@@ -159,4 +151,13 @@ func initConfig() {
 	// get environment vars
 	viper.SetEnvPrefix(cfgEnvVarsPrefix)
 	viper.AutomaticEnv() // read in environment variables that match
+
+	GlobalConfig, err := goclipkgtemplate.NewConfigClass(viper.GetViper(),
+		goclipkgtemplate.ConfigClassCfg{ Log: log.Term } )
+	if err != nil {
+		log.Term.Error(err)
+		os.Exit(1)
+	}
+	GlobalConfig.Open()
+
 }
