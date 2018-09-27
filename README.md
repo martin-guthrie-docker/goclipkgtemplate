@@ -20,7 +20,7 @@ This example has two pkg modules,
     access by other parts of the program, rather than doing viper.get()
 
     
-##Configuration
+## Configuration
 
 The program can be configured two different ways,
 

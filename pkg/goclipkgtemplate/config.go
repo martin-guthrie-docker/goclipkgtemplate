@@ -40,23 +40,10 @@ func NewConfigClass(v *viper.Viper, cfg ConfigClassCfg) (*ConfigClass, error) {
 	t := new(ConfigClass)
 	t.Log = cfg.Log
 
-	// data from the config file
-	if v.Get("Manufacturer") != nil {
-		t.CarData.Manufacturer = v.Get("Manufacturer").(string)
-	} else {
-		t.CarData.Manufacturer = "UNKNOWN"
+	err := viper.Unmarshal(&t.CarData)
+	if err != nil {
+		panic(err)
 	}
-	if v.Get("Model") != nil {
-		t.CarData.Model = v.Get("Model").(string)
-	} else {
-		t.CarData.Model = "UNKNOWN"
-	}
-	//if v.Get("Year") != nil {
-	//	t.CarData.Year = v.Get("Year").(int16)
-	//} else {
-	//	t.CarData.Year = -1
-	//}
-	//t.CarData.Options = v.Get("Options").(string)  # FIXME
 
 	// data from the environment variables
 	if viper.Get("one") != nil {
@@ -69,14 +56,9 @@ func NewConfigClass(v *viper.Viper, cfg ConfigClassCfg) (*ConfigClass, error) {
 	return t, nil
 }
 
-func (t *ConfigClass) Open() error {
-	return nil
-}
-
 func (t *ConfigClass) Dump(saveToYaml bool, filename string) error {
-	t.Log.Info("Manufacturer: ", t.CarData.Manufacturer)
-	t.Log.Info("Model: ", t.CarData.Model)
-	//t.Log.Info("Year: ", t.CarData.Year)
+	t.Log.Infof("CarData: %s %s %d %s",
+		t.CarData.Manufacturer, t.CarData.Model, t.CarData.Year, t.CarData.Options)
 
 	t.Log.Info("ENV ONE: ", t.EnvData.one)
 

@@ -5,4 +5,4 @@ Options:
   leather
   sun roof
 # add verbosity 0-Panic, 4-Info, 5-Debug
-verbosity: 5
+verbosity: 4
