@@ -1,6 +1,7 @@
 package goclipkgtemplate
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"io/ioutil"
@@ -40,27 +41,34 @@ func NewConfigClass(v *viper.Viper, cfg ConfigClassCfg) (*ConfigClass, error) {
 	t := new(ConfigClass)
 	t.Log = cfg.Log
 
-	err := viper.Unmarshal(&t.CarData)
+	err := v.Unmarshal(&t.CarData)
 	if err != nil {
 		panic(err)
 	}
 
 	// data from the environment variables
-	if viper.Get("one") != nil {
-		t.EnvData.one = viper.Get("one").(string)
+	// was not able to use Unmarshal.... see https://github.com/spf13/viper/issues/188
+	if v.Get("one") != nil {
+		t.EnvData.one = v.Get("one").(string)
 	} else {
 		t.EnvData.one = "UNKNOWN"
 	}
 
-	t.Log.Info("Created")
 	return t, nil
 }
 
-func (t *ConfigClass) Dump(saveToYaml bool, filename string) error {
+func (t *ConfigClass) Dump(toConsole bool, saveToYaml bool, filename string) error {
 	t.Log.Infof("CarData: %s %s %d %s",
 		t.CarData.Manufacturer, t.CarData.Model, t.CarData.Year, t.CarData.Options)
+	if toConsole {
+		fmt.Printf("CarData: %s %s %d %s\n",
+			t.CarData.Manufacturer, t.CarData.Model, t.CarData.Year, t.CarData.Options)
+	}
 
-	t.Log.Info("ENV ONE: ", t.EnvData.one)
+	t.Log.Infof("ENV GOCLIP_ONE: %s", t.EnvData.one)
+	if toConsole {
+		fmt.Printf("ENV GOCLIP_ONE: %s\n", t.EnvData.one)
+	}
 
 	if saveToYaml {
 		t.Log.Info("TODO, save to file ", filename)

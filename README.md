@@ -30,6 +30,7 @@ The program can be configured two different ways,
   * using '--config <path_to_file>' a different file can be specified
 * environment variables 
   * variables with prefix 'GOCLIP_' are imported
+    * GOCLIP_ONE is accepted (export GOCLIP_ONE=igotthis)
   
 Note that currently yaml and environment variables are hard coded, meaning
 that the name of the variable to import is coded into th program before it

@@ -6,6 +6,7 @@ import (
 	"github.com/martin-guthrie-docker/goclipkgtemplate/pkg/goclipkgtemplate"
 	"github.com/sirupsen/logrus"
 	"os"
+	"strings"
 
 	"github.com/martin-guthrie-docker/goclipkgtemplate/pkg/log"
 	"github.com/mitchellh/go-homedir"
@@ -25,6 +26,8 @@ var cfgEnvVarsPrefix = "GOCLIP"  // vars in format GOCLIP_<key>
 var cfgFileName string = ".goclipkgtemplate"
 var cfgFile string
 
+// Global object to put program state into
+// some state comes from yaml config file, other state can be added
 var GlobalConfig *goclipkgtemplate.ConfigClass
 
 var rootCmd = &cobra.Command{
@@ -105,7 +108,6 @@ func setLoggingLevel(level int) {
 	}
 }
 
-
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
 	// from https://github.com/spf13/cobra
@@ -151,6 +153,7 @@ func initConfig() {
 	// get environment vars
 	viper.SetEnvPrefix(cfgEnvVarsPrefix)
 	viper.AutomaticEnv() // read in environment variables that match
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	var err error
 	GlobalConfig, err = goclipkgtemplate.NewConfigClass(viper.GetViper(),

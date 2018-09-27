@@ -11,7 +11,7 @@ func init() {
 
 var cmdState = &cobra.Command{
 	Use:   "state",
-	Short: "print your name to the console",
+	Short: "print state to the console/log",
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		stateFunc(args)
@@ -19,11 +19,9 @@ var cmdState = &cobra.Command{
 }
 
 func stateFunc(args []string) error {
-	log.Term.Info("Start")
-
+	log.Term.Info("State:")
 	// CmdConfig is from cmd_root_exec.go, global
-	GlobalConfig.Dump(false, "")
-
-	log.Term.Debug("Done")
+	GlobalConfig.Dump(true, false, "")
+	log.Term.Info("State: ---")
 	return nil
 }
