@@ -29,6 +29,7 @@ var (
 		DebugLevelStyle: "blue",
 		PrefixStyle:     "cyan",
 		TimestampStyle:  "black+h",
+		FileLineFuncStyle: "blue",
 	}
 	noColorsColorScheme *compiledColorScheme = &compiledColorScheme{
 		InfoLevelColor:  ansi.ColorFunc(""),
@@ -39,6 +40,7 @@ var (
 		DebugLevelColor: ansi.ColorFunc(""),
 		PrefixColor:     ansi.ColorFunc(""),
 		TimestampColor:  ansi.ColorFunc(""),
+		FileLineFuncColor: ansi.ColorFunc(""),
 	}
 	defaultCompiledColorScheme *compiledColorScheme = compileColorScheme(defaultColorScheme)
 )
@@ -56,6 +58,7 @@ type ColorScheme struct {
 	DebugLevelStyle string
 	PrefixStyle     string
 	TimestampStyle  string
+	FileLineFuncStyle string
 }
 
 type compiledColorScheme struct {
@@ -67,6 +70,7 @@ type compiledColorScheme struct {
 	DebugLevelColor func(string) string
 	PrefixColor     func(string) string
 	TimestampColor  func(string) string
+	FileLineFuncColor func(string) string
 }
 
 type TextFormatter struct {
@@ -139,6 +143,7 @@ func compileColorScheme(s *ColorScheme) *compiledColorScheme {
 		DebugLevelColor: getCompiledColor(s.DebugLevelStyle, defaultColorScheme.DebugLevelStyle),
 		PrefixColor:     getCompiledColor(s.PrefixStyle, defaultColorScheme.PrefixStyle),
 		TimestampColor:  getCompiledColor(s.TimestampStyle, defaultColorScheme.TimestampStyle),
+		FileLineFuncColor: getCompiledColor(s.FileLineFuncStyle, defaultColorScheme.FileLineFuncStyle),
 	}
 }
 
@@ -283,7 +288,7 @@ func (f *TextFormatter) printColored(b *bytes.Buffer, entry *logrus.Entry, keys 
 		if k != "prefix" {
 			v := entry.Data[k]
 			//fmt.Fprintf(b, " %s=%+v", levelColor(k), v)
-			fmt.Fprintf(b, " %+v", v)
+			fmt.Fprintf(b, " %+v", colorScheme.FileLineFuncColor(v.(string)))
 		}
 	}
 	fmt.Fprintf(b, "| "+messageFormat, message)
