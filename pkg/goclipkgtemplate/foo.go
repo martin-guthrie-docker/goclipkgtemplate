@@ -1,6 +1,7 @@
 package goclipkgtemplate
 
 import (
+	"fmt"
 	"github.com/sirupsen/logrus"
 	"io/ioutil"
 )
@@ -41,11 +42,19 @@ func NewFooClass(host string, cfg FooClassCfg) (*FooClass, error) {
 
 func (t *FooClass) Open() error {
 	t.open = true
-	t.Log.Info("Hello! My name is ", t.Name)
+	msg := fmt.Sprintf( "Hello! My name is %s", t.Name)
+	t.Log.Info(msg)
+	fmt.Println(msg)
 	return nil
 }
 
+func (t *FooClass) IsOpen() bool {
+	return t.open
+}
+
 func (t *FooClass) Close() {
-	t.Log.Info("Goodbye ", t.Host)
+	msg := fmt.Sprintf( "And my host is %s", t.Host)
+	t.Log.Info(msg)
+	fmt.Println(msg)
 	t.open = false
 }
