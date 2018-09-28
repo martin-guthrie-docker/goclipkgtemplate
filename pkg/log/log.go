@@ -1,24 +1,42 @@
 package log
 
 import (
-	"github.com/onrik/logrus/filename"
+	"fmt"
 	"github.com/sirupsen/logrus"
-	"github.com/x-cray/logrus-prefixed-formatter"
 	"os"
+	"path"
+	"runtime"
 )
 
-// Term is the terminal logger for the Genesis application.
 var Term *logrus.Logger
+
+// ContextHook ...
+type ContextHook struct{}
+
+// Levels ...
+func (hook ContextHook) Levels() []logrus.Level {
+	return logrus.AllLevels
+}
+
+// Fire ...
+func (hook ContextHook) Fire(entry *logrus.Entry) error {
+	if pc, file, line, ok := runtime.Caller(10); ok {
+		funcName := runtime.FuncForPC(pc).Name()
+
+		entry.Data["s"] = fmt.Sprintf("%16s:%4v:%-30v", path.Base(file), line, path.Base(funcName))
+	}
+
+	return nil
+}
 
 func setupTerm() {
 	Term = logrus.New()
 	Term.Out = os.Stdout
 
-	Term.Formatter = new(prefixed.TextFormatter)
+	Term.Formatter = new(TextFormatter)
 
-	filenameHook := filename.NewHook()
-	filenameHook.Field = "src"
-	Term.AddHook(filenameHook)
+	h := new(ContextHook)
+	Term.AddHook(h)
 
 	// Default starting log level
 	Term.Level = logrus.WarnLevel
